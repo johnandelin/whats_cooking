@@ -11,11 +11,13 @@ test <- fromJSON("test.json", flatten = TRUE) |>
   as_tibble() |>
   mutate(ingredients = map_chr(ingredients, paste, collapse = " "))
 
+# Defining my recipe 
 rec <- recipe(cuisine ~ ingredients, data = train) |>
   step_tokenize(ingredients) |>
   step_tokenfilter(ingredients, max_tokens = 6000) |>
   step_tfidf(ingredients)
 
+# Defining my model and workflow
 mod <- multinom_reg(
   penalty = tune(),
   mixture = tune()
@@ -27,6 +29,7 @@ wf <- workflow() |>
   add_recipe(rec) |>
   add_model(mod)
 
+# Cross-validation 
 folds <- vfold_cv(train, v = 5, strata = cuisine)
 
 grid <- grid_regular(
@@ -42,6 +45,7 @@ tuned <- tune_grid(
   metrics = metric_set(accuracy)
 )
 
+# Prediction
 best_params <- tuned |>
   select_best("accuracy")
 
